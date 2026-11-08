@@ -26,6 +26,7 @@ The full plan is in `SPEC.md`. Read it before working, and follow its build orde
 
 - `node scripts/fetch-rss.mjs`: fetch episode metadata into `data/episodes.json` (no install needed)
 - `cd app`, then `npm install` and `npm run dev`: start the app at http://127.0.0.1:3000
+- `cd app && npm run typecheck`: type-check the app and server (run before committing)
 
 ## Layout
 
