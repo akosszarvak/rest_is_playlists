@@ -22,7 +22,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Repo root that holds data/ and .data/. The Nuxt project itself lives in app/.
     // Override with NUXT_REPO_ROOT.
-    repoRoot: fileURLToPath(new URL('..', import.meta.url))
+    repoRoot: fileURLToPath(new URL('..', import.meta.url)),
+    // Must exactly match a redirect URI registered in the Spotify app. Override with
+    // NUXT_SPOTIFY_REDIRECT_URI (e.g. when running on another port).
+    spotifyRedirectUri: 'http://127.0.0.1:3000/api/spotify/callback'
   },
 
   app: {

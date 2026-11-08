@@ -55,17 +55,32 @@ export interface SpotifyEpisode {
   releaseDate: string // YYYY-MM-DD (or shorter for low precision)
 }
 
-/** "720. The Suez Crisis: Britain’s Shattered Empire (Part 2)" -> "the suez crisis britains shattered empire part 2" */
-export function normalizeTitle(title: string): string {
-  return title
+/** Lowercase words only: no accents, apostrophes or punctuation; "&" becomes "and". */
+function cleanText(text: string): string {
+  return text
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .replace(/^\s*\d+\s*[.:)-]\s*/, '') // leading episode number
     .replace(/['’‘`]/g, '')
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
+}
+
+const LEADING_NUMBER = /^\s*\d+\s*[.:)-]\s*/
+
+/** "720. The Suez Crisis: Britain’s Shattered Empire (Part 2)" -> "the suez crisis britains shattered empire part 2" */
+export function normalizeTitle(title: string): string {
+  return cleanText(title.replace(LEADING_NUMBER, ''))
+}
+
+/**
+ * Comparison keys: the title with and without its leading number. "290: 2022: A History"
+ * gives "290 2022 a history" and "2022 a history", so it still matches a Spotify title of
+ * "2022: A History" (keys "2022 a history" and "a history") whichever side has the number.
+ */
+export function titleKeys(title: string): string[] {
+  return [...new Set([cleanText(title), normalizeTitle(title)])].filter(Boolean)
 }
 
 function dayDiff(a: string, b: string): number {
@@ -95,16 +110,20 @@ export function matchEpisodes(rss: Episode[], spotify: SpotifyEpisode[], already
   const taken = new Set(alreadyTaken)
   const matches = new Map<string, string>()
   const items = spotify.map(s => ({ ...s, title: normalizeTitle(s.name) }))
-  const byTitle = new Map<string, typeof items>()
-  for (const item of items) byTitle.set(item.title, [...(byTitle.get(item.title) ?? []), item])
+  const byKey = new Map<string, Set<(typeof items)[number]>>()
+  for (const item of items) {
+    for (const key of titleKeys(item.name)) byKey.set(key, (byKey.get(key) ?? new Set()).add(item))
+  }
+  /** Spotify episodes sharing any title key with the RSS episode. */
+  const sameTitle = (e: { keys: string[] }) => [...new Set(e.keys.flatMap(k => [...(byKey.get(k) ?? [])]))]
 
-  const pending = rss.map(e => ({ episode: e, title: normalizeTitle(e.title) }))
-  const passes: ((e: { episode: Episode, title: string }) => string | undefined)[] = [
+  const pending = rss.map(e => ({ episode: e, title: normalizeTitle(e.title), keys: titleKeys(e.title) }))
+  const passes: ((e: (typeof pending)[number]) => string | undefined)[] = [
     // 1. Same title, date within a day.
-    e => byTitle.get(e.title)?.find(s => !taken.has(s.id) && dayDiff(s.releaseDate, e.episode.releaseDate) <= 1)?.id,
+    e => sameTitle(e).find(s => !taken.has(s.id) && dayDiff(s.releaseDate, e.episode.releaseDate) <= 1)?.id,
     // 2. Same title on any date, if only one unused candidate.
     (e) => {
-      const free = (byTitle.get(e.title) ?? []).filter(s => !taken.has(s.id))
+      const free = sameTitle(e).filter(s => !taken.has(s.id))
       return free.length === 1 ? free[0]!.id : undefined
     },
     // 3. Close title within a day.

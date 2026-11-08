@@ -16,3 +16,9 @@ export async function readBodyWith<S extends z.ZodType>(event: H3Event, schema: 
   }
   return result.data
 }
+
+/** A message for any thrown value (H3 errors, Spotify errors, plain errors). */
+export function errorText(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') return error.message
+  return String(error)
+}

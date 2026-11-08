@@ -6,6 +6,7 @@ import {
   itemRequests,
   matchEpisodes,
   normalizeTitle,
+  titleKeys,
   parseEpisodeLink,
   planExport,
   spotifyFileSchema,
@@ -23,6 +24,15 @@ describe('normalizeTitle', () => {
     expect(normalizeTitle('720. The Suez Crisis: Britain’s Shattered Empire (Part 2)')).toBe('the suez crisis britains shattered empire part 2')
     expect(normalizeTitle('200: American Civil War: Aftermath & Legacy (Part 4)')).toBe('american civil war aftermath and legacy part 4')
     expect(normalizeTitle('1981')).toBe('1981') // a title that is only a number stays
+  })
+
+  it('matches a title whose name starts with a year, whichever side has the episode number', () => {
+    expect(titleKeys('290: 2022: A History')).toEqual(['290 2022 a history', '2022 a history'])
+    const { matches } = matchEpisodes(
+      [rss('y', '290: 2022: A History', '2022-12-29')],
+      [{ id: id('Y'), name: '2022: A History', releaseDate: '2022-12-29' }]
+    )
+    expect(matches.get('y')).toBe(id('Y'))
   })
 })
 
