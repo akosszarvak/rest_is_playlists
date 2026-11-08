@@ -53,7 +53,7 @@ RSS feed: https://feeds.megaphone.fm/GLT4787413333
 {
   "version": 1,
   "generatedAt": "ISO timestamp",
-  "method": "premade | manual | anthropic | gemini | github-models",
+  "method": "premade | manual | anthropic | gemini",
   "playlists": [
     {
       "id": "kebab-case-slug",
@@ -125,9 +125,10 @@ All pages share one Nuxt UI layout with a sidebar.
    and shows the diff.
 3. **API providers** (keys set in Settings), each with a server-side adapter that returns the
    same validated structure:
-   - **Anthropic Claude** (paid): Messages API, structured JSON output. Default model: a current Haiku.
-   - **Google Gemini** (free tier via Google AI Studio key): JSON response mode.
-   - **GitHub Models** (free, GitHub token with models access): OpenAI-compatible chat completions.
+   - **Anthropic Claude** (paid): Messages API, structured JSON output. Default model: `claude-haiku-5-5`.
+   - **Google Gemini** (free tier via Google AI Studio key): JSON response mode. Default model:
+     `gemini-3.6-flash`. Free-tier prompts may be used by Google to improve its products.
+   - *GitHub Models was dropped: GitHub retired it on 2026-07-30.*
    - Verify current endpoints, auth headers and model names against each provider's docs when
      implementing. Do not hard-code from memory.
    - Batching: keep each request well under 100K input tokens (Haiku-class rates multiply
@@ -179,6 +180,6 @@ one. Never create duplicates.
 3. Episodes: RSS refresh server route (reuse the logic in `scripts/fetch-rss.mjs`), Episodes page.
 4. Grouping data layer and Playlists page with manual editing.
 5. Proposal/diff view, then the manual prompt method.
-6. AI adapters: Anthropic, then Gemini, then GitHub Models.
+6. AI adapters: Anthropic, then Gemini.
 7. Spotify PKCE login, episode matching, export.
 8. Dashboard, README completion, final pass.
