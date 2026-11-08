@@ -10,15 +10,6 @@ export default defineNuxtConfig({
   // Spotify only accepts an explicit loopback IP as redirect host, not "localhost".
   devServer: { host: '127.0.0.1', port: 3000 },
 
-  // The RSS parser lives outside app/ so the no-install CLI script can share it.
-  alias: {
-    '#rss': fileURLToPath(new URL('../scripts/lib/rss.mjs', import.meta.url))
-  },
-  nitro: {
-    // Bundle the shared parser into the server build instead of importing it at runtime.
-    externals: { inline: [fileURLToPath(new URL('../scripts/lib', import.meta.url))] }
-  },
-
   runtimeConfig: {
     // Repo root that holds data/ and .data/. The Nuxt project itself lives in app/.
     // Override with NUXT_REPO_ROOT.

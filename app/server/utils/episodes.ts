@@ -1,8 +1,17 @@
+import { pathToFileURL } from 'node:url'
 import { episodesFileSchema, type EpisodeRef, type EpisodesFile, type RefreshResult } from '#shared/episodes'
-// Same parser as the CLI script (node scripts/fetch-rss.mjs).
-import { FEED_URL, fetchEpisodes } from '#rss'
+import type * as Rss from '../../../scripts/lib/rss'
 
 const episodesPath = () => repoPath('data', 'episodes.json')
+
+/**
+ * Loads the RSS parser shared with the no-install CLI script (node scripts/fetch-rss.mjs).
+ * It lives outside app/, so it is imported from disk at runtime instead of being bundled:
+ * a build-time alias for it broke whenever Nuxt restarted.
+ */
+function loadRssParser(): Promise<typeof Rss> {
+  return import(/* @vite-ignore */ pathToFileURL(repoPath('scripts', 'lib', 'rss.mjs')).href)
+}
 
 /**
  * A refresh may not shrink the list by more than this share. A feed outage or a
@@ -28,6 +37,7 @@ export function refreshEpisodes(): Promise<RefreshResult> {
 async function doRefresh(): Promise<RefreshResult> {
   let raw: unknown
   try {
+    const { FEED_URL, fetchEpisodes } = await loadRssParser()
     raw = await fetchEpisodes(FEED_URL, { signal: AbortSignal.timeout(60_000) })
   } catch (error) {
     throw createError({ statusCode: 502, message: `Could not fetch the RSS feed: ${(error as Error).message}` })
