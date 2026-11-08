@@ -2,9 +2,11 @@
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Episode, EpisodesFile, RefreshResult } from '#shared/episodes'
+import { EXCLUDE_REASON_LABELS, type ExcludeReason, type GroupingState } from '#shared/grouping'
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
+const ULink = resolveComponent('ULink')
 
 const toast = useToast()
 
@@ -12,6 +14,28 @@ const toast = useToast()
 const { data, status, error: loadError, refresh: reload } = await useFetch<EpisodesFile | null>('/api/episodes', {
   server: false,
   lazy: true
+})
+
+// Playlist membership and excluded flags come from the saved grouping.
+const { data: grouping, refresh: reloadGrouping } = useFetch<GroupingState>('/api/grouping', { server: false, lazy: true })
+
+interface Placement {
+  playlists: { id: string, name: string }[]
+  excluded: ExcludeReason | null
+}
+
+const placements = computed(() => {
+  const map = new Map<string, Placement>()
+  const get = (guid: string) => {
+    let entry = map.get(guid)
+    if (!entry) map.set(guid, entry = { playlists: [], excluded: null })
+    return entry
+  }
+  for (const playlist of grouping.value?.grouping.playlists ?? []) {
+    for (const guid of playlist.episodes) get(guid).playlists.push({ id: playlist.id, name: playlist.name })
+  }
+  for (const entry of grouping.value?.grouping.excluded ?? []) get(entry.guid).excluded = entry.reason
+  return map
 })
 
 // --- Refresh from RSS ---------------------------------------------------------------
@@ -24,7 +48,7 @@ async function refreshFromRss() {
   try {
     const result = await $fetch<RefreshResult>('/api/episodes/refresh', { method: 'POST' })
     lastRefresh.value = result
-    await reload()
+    await Promise.all([reload(), reloadGrouping()])
     toast.add({
       title: 'Episodes refreshed',
       description: `${result.count} episodes, ${result.added.length} new, ${result.removed.length} removed.`,
@@ -43,6 +67,7 @@ async function refreshFromRss() {
 const search = ref('')
 const type = ref<'all' | Episode['episodeType']>('all')
 const sort = ref<'newest' | 'oldest' | 'longest'>('newest')
+const placement = ref<'all' | 'placed' | 'unassigned' | 'excluded'>('all')
 const page = ref(1)
 const PAGE_SIZE = 50
 
@@ -51,6 +76,12 @@ const typeItems = [
   { label: 'Full', value: 'full' },
   { label: 'Bonus', value: 'bonus' },
   { label: 'Trailer', value: 'trailer' }
+]
+const placementItems = [
+  { label: 'Any placement', value: 'all' },
+  { label: 'In a playlist', value: 'placed' },
+  { label: 'Unassigned', value: 'unassigned' },
+  { label: 'Excluded', value: 'excluded' }
 ]
 const sortItems = [
   { label: 'Newest first', value: 'newest' },
@@ -62,6 +93,11 @@ const filtered = computed(() => {
   const terms = search.value.toLowerCase().split(/\s+/).filter(Boolean)
   const list = (data.value?.episodes ?? []).filter((episode) => {
     if (type.value !== 'all' && episode.episodeType !== type.value) return false
+    if (placement.value !== 'all') {
+      const where = placements.value.get(episode.guid)
+      const state = where?.excluded ? 'excluded' : where?.playlists.length ? 'placed' : 'unassigned'
+      if (state !== placement.value) return false
+    }
     if (!terms.length) return true
     const haystack = `${episode.title}\n${episode.description}`.toLowerCase()
     return terms.every(term => haystack.includes(term))
@@ -76,7 +112,7 @@ const pageRows = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZ
 
 // Back to page 1 and collapse rows whenever the result set changes.
 const expanded = ref<Record<string, boolean>>({})
-watch([search, type, sort], () => { page.value = 1 })
+watch([search, type, sort, placement], () => { page.value = 1 })
 watch(pageRows, () => { expanded.value = {} })
 
 // --- Table ---------------------------------------------------------------------------
@@ -103,6 +139,23 @@ const columns: TableColumn<Episode>[] = [
         ? h(UBadge, { color: 'neutral', variant: 'subtle', size: 'sm', class: 'capitalize' }, () => row.original.episodeType)
         : null
     ])
+  },
+  {
+    id: 'playlists',
+    header: 'Playlists',
+    cell: ({ row }) => {
+      if (!grouping.value) return null
+      const where = placements.value.get(row.original.guid)
+      if (where?.excluded) {
+        return h(UBadge, { color: 'neutral', variant: 'outline', size: 'sm', icon: 'i-lucide-eye-off' }, () => `Excluded: ${EXCLUDE_REASON_LABELS[where.excluded!]}`)
+      }
+      if (!where?.playlists.length) {
+        return h(ULink, { to: '/playlists?p=unassigned' }, () => h(UBadge, { color: 'warning', variant: 'subtle', size: 'sm' }, () => 'Unassigned'))
+      }
+      return h('div', { class: 'flex flex-wrap gap-1' }, where.playlists.map(p =>
+        h(ULink, { to: `/playlists?p=${p.id}`, key: p.id }, () => h(UBadge, { color: 'primary', variant: 'subtle', size: 'sm' }, () => p.name))
+      ))
+    }
   },
   {
     accessorKey: 'releaseDate',
@@ -150,6 +203,7 @@ const newGuids = computed(() => new Set(lastRefresh.value?.added.map(e => e.guid
           class="w-full max-w-sm"
         />
         <USelect v-model="type" :items="typeItems" class="w-36" />
+        <USelect v-model="placement" :items="placementItems" class="w-40" />
         <USelect v-model="sort" :items="sortItems" class="w-40" />
       </UDashboardToolbar>
     </template>
@@ -207,7 +261,7 @@ const newGuids = computed(() => new Set(lastRefresh.value?.added.map(e => e.guid
             :loading="status === 'pending'"
             :get-row-id="(row: Episode) => row.guid"
             :meta="{ class: { tr: (row) => newGuids.has(row.original.guid) ? 'bg-success/5' : '' } }"
-            :empty="search || type !== 'all' ? 'No episodes match your filters.' : 'No episodes.'"
+            :empty="search || type !== 'all' || placement !== 'all' ? 'No episodes match your filters.' : 'No episodes.'"
             class="flex-1"
           >
             <template #expanded="{ row }">
