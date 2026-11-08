@@ -108,6 +108,15 @@ async function onAccepted() {
             <UCard>
               <template #header>
                 <h2 class="font-semibold">
+                  AI provider
+                </h2>
+              </template>
+              <GroupingAiMethod :mode="mode" @proposed="reloadProposal" />
+            </UCard>
+
+            <UCard>
+              <template #header>
+                <h2 class="font-semibold">
                   Manual: copy &amp; paste into any chatbot (free)
                 </h2>
               </template>
