@@ -36,7 +36,9 @@ only returns to `127.0.0.1`). The Dashboard tells you what to do next.
 
 1. **Episodes**: the episode list is already included. Press *Refresh from RSS* to fetch
    new episodes.
-2. **Grouping**: generate a grouping and review it as a diff. *Full regroup* groups all
+2. **Grouping**: a reviewed pre-made grouping is included (17 era and theme playlists plus 7
+   series such as the French Revolution and the Hundred Years' War), so you can export right
+   away. To regroup, generate a new grouping and review it as a diff. *Full regroup* groups all
    episodes; *New episodes only* places unassigned episodes into your existing playlists.
    Accept everything, only some playlists, or nothing.
 3. **Playlists**: fine-tune by hand: move, copy, reorder (drag and drop), rename, merge,
@@ -106,7 +108,7 @@ Every few months:
 | --- | --- | --- |
 | `app/` | The Nuxt 4 + Nuxt UI app (run `npm` commands here) | yes |
 | `data/episodes.json` | Episode metadata from the RSS feed | yes |
-| `data/grouping.json` | Your playlists (created when you first save or accept a grouping) | yes |
+| `data/grouping.json` | Your playlists. Ships with a reviewed pre-made grouping; your edits replace it | yes |
 | `.data/settings.json` | Spotify Client ID, AI keys, playlist preferences | **no** |
 | `.data/spotify.json` | Spotify tokens, episode matches, exported playlist ids | **no** |
 | `.data/proposal.json` | The open grouping proposal | **no** |
