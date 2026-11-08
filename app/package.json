@@ -15,6 +15,7 @@
     "@anthropic-ai/sdk": "^1.6.0",
     "@iconify-json/lucide": "^1.2.152",
     "@nuxt/ui": "^4.12.0",
+    "@vueuse/core": "^14.4.0",
     "@vueuse/integrations": "^14.4.0",
     "nuxt": "^4.6.4",
     "sortablejs": "^1.15.7",

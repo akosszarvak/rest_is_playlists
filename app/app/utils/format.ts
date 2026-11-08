@@ -14,6 +14,17 @@ export function formatDate(isoDate: string): string {
   })
 }
 
+/** -753 -> "753 BC", 476 -> "AD 476" */
+export function formatYear(year: number): string {
+  return year < 0 ? `${-year} BC` : `AD ${year}`
+}
+
+/** { start: -753, end: 476 } -> "753 BC – AD 476" */
+export function formatEra(era: { start: number, end: number } | null): string {
+  if (!era) return ''
+  return era.start === era.end ? formatYear(era.start) : `${formatYear(era.start)} – ${formatYear(era.end)}`
+}
+
 /** ISO timestamp -> "5 Nov 2026, 14:03" in the user's time zone. */
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', {
