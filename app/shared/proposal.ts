@@ -4,6 +4,8 @@ import { z } from 'zod'
 import type { Episode } from './episodes'
 import {
   EXCLUDE_REASONS,
+  GROUPING_METHODS,
+  groupingContentSchema,
   MAX_DESCRIPTION_LENGTH,
   type Excluded,
   type GroupingContent,
@@ -397,6 +399,44 @@ export function parseAnswer(mode: ProposalMode, text: string, ctx: ConvertContex
 function formatIssues(error: z.ZodError): string {
   return error.issues.slice(0, 5).map(i => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ')
 }
+
+// --- Stored proposal ---------------------------------------------------------------------------
+
+/** Shape of `.data/proposal.json`: the one open proposal, kept until accepted or discarded. */
+export const storedProposalSchema = z.object({
+  mode: z.enum(PROPOSAL_MODES),
+  method: z.enum(GROUPING_METHODS),
+  createdAt: z.iso.datetime(),
+  /** Revision of data/grouping.json the proposal was made against. */
+  baseRevision: z.string(),
+  content: groupingContentSchema,
+  warnings: z.array(z.string())
+})
+export type StoredProposal = z.infer<typeof storedProposalSchema>
+
+/** Response of `GET /api/grouping/proposal`. */
+export interface ProposalState {
+  proposal: StoredProposal | null
+  /** True if data/grouping.json changed since the proposal was made. */
+  stale: boolean
+}
+
+export const manualAnswerRequestSchema = z.strictObject({
+  mode: z.enum(PROPOSAL_MODES),
+  text: z.string().trim().min(2, 'Paste the answer first.').max(2_000_000, 'The answer is too long.')
+})
+
+export const promptRequestSchema = z.strictObject({
+  mode: z.enum(PROPOSAL_MODES),
+  detail: z.enum(DETAIL_LEVELS)
+})
+
+export const acceptRequestSchema = z.strictObject({
+  /** Revision of data/grouping.json the user reviewed the diff against. */
+  revision: z.string(),
+  playlists: z.array(z.string()),
+  exclusions: z.boolean()
+})
 
 // --- Diff --------------------------------------------------------------------------------------
 

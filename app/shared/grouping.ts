@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const GROUPING_METHODS = ['premade', 'manual', 'anthropic', 'gemini'] as const
+export type GroupingMethod = (typeof GROUPING_METHODS)[number]
 export const PLAYLIST_KINDS = ['broad', 'series'] as const
 export const EXCLUDE_REASONS = ['club', 'archive-duplicate', 'trailer', 'other'] as const
 export type ExcludeReason = (typeof EXCLUDE_REASONS)[number]
@@ -88,6 +89,11 @@ export type Grouping = z.infer<typeof groupingSchema>
 
 /** The editable part of a grouping. `unassigned` is always derived from it. */
 export type GroupingContent = Pick<Grouping, 'playlists' | 'excluded'>
+
+export const groupingContentSchema = z.object({
+  playlists: z.array(playlistSchema),
+  excluded: z.array(excludedSchema)
+}).superRefine(checkStructure)
 
 /** Body of `PUT /api/grouping`. */
 export const groupingUpdateSchema = z.strictObject({
