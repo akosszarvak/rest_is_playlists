@@ -8,13 +8,16 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
     "@iconify-json/lucide": "^1.2.152",
     "@nuxt/ui": "^4.12.0",
+    "@vueuse/integrations": "^14.4.0",
     "nuxt": "^4.6.4",
+    "sortablejs": "^1.15.7",
     "tailwindcss": "^4.3.5",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0",
@@ -22,7 +25,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@types/sortablejs": "^1.15.9",
     "typescript": "^6.0.3",
+    "vitest": "^5.1.0",
     "vue-tsc": "^3.3.14"
   }
 }
