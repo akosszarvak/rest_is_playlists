@@ -27,9 +27,19 @@ The full plan is in `SPEC.md`. Read it before working, and follow its build orde
 - `node scripts/fetch-rss.mjs`: fetch episode metadata into `data/episodes.json` (no install needed)
 - `cd app`, then `npm install` and `npm run dev`: start the app at http://127.0.0.1:3000
 - `cd app && npm run typecheck`: type-check the app and server (run before committing)
+- `cd app && npm test`: unit tests for the framework-free logic in `app/shared/` (run before committing)
 
 ## Layout
 
 - The Nuxt project lives in `app/` (Nuxt 4 source in `app/app/`, server routes in `app/server/`).
 - `data/` and `.data/` stay at the **repo root**, not inside `app/`. Server code resolves them
   from the repo root.
+- Pure logic (grouping operations, proposals, AI pipeline, Spotify matching/export planning,
+  dashboard hints) lives in `app/shared/` with tests in `app/test/`. Server routes and
+  `app/server/utils/` handle files and external calls.
+
+## Testing external services without real accounts
+
+Server-only env vars point the adapters at local mocks: `RIP_GEMINI_BASE_URL`,
+`RIP_SPOTIFY_ACCOUNTS_URL`, `RIP_SPOTIFY_API_URL`. Never commit test data: delete any
+`data/grouping.json` or `.data/*` files a test created.
