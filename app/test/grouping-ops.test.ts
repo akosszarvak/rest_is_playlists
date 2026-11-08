@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { reactive } from 'vue'
 import { groupingSchema, type GroupingContent } from '../shared/grouping'
 import {
   addEpisodes,
@@ -47,6 +48,13 @@ describe('createPlaylist', () => {
     expect(again.id).toBe('ancient-rome-2')
     expect(content.playlists.at(-1)?.episodes).toEqual(['e5'])
     expect(content.excluded).toEqual([])
+  })
+
+  it('works on Vue reactive proxies (the page passes reactive state)', () => {
+    const input = reactive(base())
+    const { content } = createPlaylist(input, { name: 'X' })
+    expect(content.playlists).toHaveLength(4)
+    expect(input.playlists).toHaveLength(3)
   })
 
   it('does not mutate its input', () => {

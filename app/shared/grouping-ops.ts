@@ -4,8 +4,12 @@ import type { Era, ExcludeReason, Grouping, GroupingContent, GroupingIssue, Play
 
 type Content = GroupingContent
 
+/**
+ * Deep copy. A grouping is plain JSON, and a JSON round-trip also works on Vue reactive
+ * proxies, which structuredClone rejects.
+ */
 function clone<T>(value: T): T {
-  return structuredClone(value)
+  return JSON.parse(JSON.stringify(value)) as T
 }
 
 function findPlaylist(content: Content, id: string): Playlist {
