@@ -25,4 +25,10 @@ The full plan is in `SPEC.md`. Read it before working, and follow its build orde
 ## Commands
 
 - `node scripts/fetch-rss.mjs`: fetch episode metadata into `data/episodes.json` (no install needed)
-- `npm install`, then `npm run dev`: start the app at http://127.0.0.1:3000
+- `cd app`, then `npm install` and `npm run dev`: start the app at http://127.0.0.1:3000
+
+## Layout
+
+- The Nuxt project lives in `app/` (Nuxt 4 source in `app/app/`, server routes in `app/server/`).
+- `data/` and `.data/` stay at the **repo root**, not inside `app/`. Server code resolves them
+  from the repo root.
